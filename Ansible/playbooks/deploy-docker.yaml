@@ -1,0 +1,82 @@
+---
+- name: Wait for ssh connection
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Ensure ssh port open
+      ansible.builtin.wait_for:
+        port: 22
+        delay: 10
+        timeout: 100
+        search_regex: OpenSSH
+        host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+      vars:
+        ansible_connection: local
+
+
+- name: Install all components
+  hosts: all
+  become: true
+  tasks:
+
+  - name: Install python3 and docker
+    vars:
+      ansible_python_interpreter: /usr/bin/python
+    ansible.builtin.yum:
+      name:
+        - python3
+        - docker
+      update_cache: true
+      state: present
+
+  - name: Install docker python module
+    ansible.builtin.pip:
+      name: docker
+  
+  - name: Ensure docker is running
+    ansible.builtin.systemd:
+      name: docker
+      state: started
+      daemon_reload: yes
+
+
+- name: Add ec2-user to docker group
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Add ec2-user to docker group
+      ansible.builtin.user:
+        name: ec2-user
+        groups: docker
+        append: true
+    
+    - name: Reconnect to server session
+      ansible.builtin.meta: reset_connection
+
+
+- name: Start docker container
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Unpack the .tgz archive
+      ansible.builtin.unarchive:
+        src: "./files/node-ex-website-1.0.0.tgz"
+        dest: /home/ec2-user
+
+    - name: Build the Docker image on remote host
+      community.docker.docker_image:
+        name: my-app
+        source: build
+        build:
+          path: /home/ec2-user/package/
+        state: present
+
+    - name: Start Docker container
+      community.docker.docker_container:
+        name: my-app-container
+        image: my-app
+        ports:
+          - "80:3000"
+        state: started
