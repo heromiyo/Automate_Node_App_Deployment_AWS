@@ -14,11 +14,11 @@ This repository contains Terraform code that creates a VPC, subnet, internet gat
 
 1. Clone the repository:
 ```
-$ git clone https://github.com/Oleh-Hudzo/IaaC-project.git
+$ git clone https://github.com/heromiyo/Automate_Node_App_Deployment_AWS
 ```
 2. Navigate to the Terraform directory within the cloned repository:
 ```
-$ cd IaaC-project/Terraform
+$ cd Automate_Node_App_Deployment_AWS/Terraform
 ```
 3. Change variables in a file named terraform.tfvars in the Terraform directory of the cloned repository, and populate it with the following variables:
 ```
